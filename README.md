@@ -24,6 +24,18 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000> in your browser.
 
+## GitHub Pages deployment notes
+
+- Ensure `index.html`, `manifest.json`, `service-worker.js`, `app.js`, `style.css`, and icons are at the repository root (or the folder you'll publish).
+- The app uses relative paths (e.g. `./style.css`) so it can be hosted under `https://username.github.io/repo-name/` without further edits.
+- The `manifest.json` `start_url` is set to `./` to make install work from repo subpaths.
+- When enabling Pages, choose the branch and folder (root) and wait for the site to publish. After publishing, visit the Pages URL and confirm Service Worker registration in DevTools → Application.
+- If the Service Worker doesn't appear to update after a redeploy, unregister it from DevTools and reload the page to pick up the new SW.
+
+## Security reminder
+
+- This repository currently contains an inline OpenWeather API key in `app.js` for classroom/demo convenience. For a public production site, remove the key and use a serverless proxy or environment variables.
+
 ## Security note
 
 - The file `app.js` contains the API key in the constant `OWM_KEY` for simplicity. Do NOT commit your real key to a public repo. If you plan to publish this, remove the key and use a serverless proxy or environment variables.

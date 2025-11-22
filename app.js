@@ -247,7 +247,8 @@ function capitalize(s){ if (!s) return ''; return s.charAt(0).toUpperCase() + s.
 
 function registerSW(){
   if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('service-worker.js')
+    // register relative to current path so it works on GitHub Pages repo subpaths
+    navigator.serviceWorker.register('./service-worker.js')
       .then(()=>console.log('SW registered'))
       .catch(err=>console.warn('SW failed', err));
   }
