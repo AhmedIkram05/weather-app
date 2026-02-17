@@ -15,6 +15,7 @@ const unitMetric = document.getElementById('unit-metric');
 const unitImperial = document.getElementById('unit-imperial');
 
 let lastCoords = null; // {lat, lon, label}
+const GEO_ERRORS = { PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 };
 
 function getUnits(){ return localStorage.getItem('owm_units') || 'metric'; }
 function setUnits(u){ localStorage.setItem('owm_units', u); }
@@ -98,7 +99,7 @@ function today(){
 async function getWeatherByGPS(){
   setStatus('Getting location...', 'loading');
   if (!navigator.geolocation){ setStatus('Geolocation not supported.', 'error'); return; }
-  if (!window.isSecureContext){ setStatus('Location requires HTTPS or localhost.', 'error'); return; }
+  if (!window.isSecureContext){ setStatus('Location access requires a secure connection (HTTPS).', 'error'); return; }
 
   try{
     if (navigator.permissions && navigator.permissions.query){
@@ -108,16 +109,16 @@ async function getWeatherByGPS(){
         return;
       }
     }
-  }catch(e){/* ignore permission API errors */}
+  }catch(e){ console.debug('Permission API check failed:', e); }
 
   navigator.geolocation.getCurrentPosition(async (pos) =>{
     const lat = pos.coords.latitude; const lon = pos.coords.longitude;
     await fetchAndRender(lat, lon, 'Your location');
   }, (err) => {
     console.error(err);
-    if (err && err.code === 1) setStatus('Location permission denied. Check browser site settings.', 'error');
-    else if (err && err.code === 2) setStatus('Location unavailable. Try again in a moment.', 'error');
-    else if (err && err.code === 3) setStatus('Location request timed out. Try again.', 'error');
+    if (err && err.code === GEO_ERRORS.PERMISSION_DENIED) setStatus('Location permission denied. Check browser site settings.', 'error');
+    else if (err && err.code === GEO_ERRORS.POSITION_UNAVAILABLE) setStatus('Location unavailable. Try again in a moment.', 'error');
+    else if (err && err.code === GEO_ERRORS.TIMEOUT) setStatus('Location request timed out. Try again.', 'error');
     else setStatus('Location access denied or unavailable.', 'error');
   }, {timeout:10000});
 }
