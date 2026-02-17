@@ -99,7 +99,7 @@ function today(){
 async function getWeatherByGPS(){
   setStatus('Getting location...', 'loading');
   if (!navigator.geolocation){ setStatus('Geolocation not supported.', 'error'); return; }
-  if (!window.isSecureContext){ setStatus('Location access requires a secure connection (HTTPS).', 'error'); return; }
+  if (!window.isSecureContext){ setStatus('Location access requires a secure context (HTTPS or localhost).', 'error'); return; }
 
   try{
     if (navigator.permissions && navigator.permissions.query){
@@ -109,7 +109,7 @@ async function getWeatherByGPS(){
         return;
       }
     }
-  }catch(e){ console.debug('Permission API check failed:', e); }
+  }catch(err){ console.debug('Permission API check failed:', err); }
 
   navigator.geolocation.getCurrentPosition(async (pos) =>{
     const lat = pos.coords.latitude; const lon = pos.coords.longitude;
