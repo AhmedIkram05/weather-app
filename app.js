@@ -98,19 +98,32 @@ function today(){
 async function getWeatherByGPS(){
   setStatus('Getting location...', 'loading');
   if (!navigator.geolocation){ setStatus('Geolocation not supported.', 'error'); return; }
+  if (!window.isSecureContext){ setStatus('Location requires HTTPS or localhost.', 'error'); return; }
+
+  try{
+    if (navigator.permissions && navigator.permissions.query){
+      const permission = await navigator.permissions.query({name: 'geolocation'});
+      if (permission.state === 'denied'){
+        setStatus('Location permission is blocked in browser settings.', 'error');
+        return;
+      }
+    }
+  }catch(e){/* ignore permission API errors */}
 
   navigator.geolocation.getCurrentPosition(async (pos) =>{
     const lat = pos.coords.latitude; const lon = pos.coords.longitude;
     await fetchAndRender(lat, lon, 'Your location');
   }, (err) => {
     console.error(err);
-    setStatus('Location access denied or unavailable.', 'error');
+    if (err && err.code === 1) setStatus('Location permission denied. Check browser site settings.', 'error');
+    else if (err && err.code === 2) setStatus('Location unavailable. Try again in a moment.', 'error');
+    else if (err && err.code === 3) setStatus('Location request timed out. Try again.', 'error');
+    else setStatus('Location access denied or unavailable.', 'error');
   }, {timeout:10000});
 }
 
 async function fetchAndRender(lat, lon, label){
   setStatus('Loading weather...', 'loading');
-  weatherEl.innerHTML = '';
   lastCoords = {lat, lon, label};
   try{
     const data = await fetchOneCall(lat, lon);
@@ -235,11 +248,10 @@ function renderWeather(payload, label){
   let updatedTs = Date.now();
   if (raw) try{ updatedTs = JSON.parse(raw).ts || Date.now(); }catch(e){}
   const updated = document.createElement('div'); updated.className='small';
+  updated.id = 'last-updated';
   updated.textContent = 'Last updated: ' + new Date(updatedTs).toLocaleString();
-  weatherEl.innerHTML = '';
-  weatherEl.appendChild(document.getElementById('current'));
-  weatherEl.appendChild(hourlyEl);
-  weatherEl.appendChild(dailyEl);
+  const oldUpdated = document.getElementById('last-updated');
+  if (oldUpdated) oldUpdated.remove();
   weatherEl.appendChild(updated);
 }
 
